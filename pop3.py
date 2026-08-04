@@ -24,9 +24,6 @@ users = None
 #Metadata for each user.
 metadata = {}
 
-#The port where the server will be operating on.
-port = 110
-
 #Load metadata for a user.
 def load_metadata(username):
     f = open(f'mail/{username}/metadata.json', 'r')
@@ -162,7 +159,7 @@ def lst(data, conn, session, arg, arg2):
     else:
         for m in metadata[session.username]:
             if (metadata[session.username][m]["id"] == int(arg)):
-                s = f'+OK {metadata[session.username][m]["id"]}  {metadata[session.username][m]["size"]}\r\n'
+                s = f'+OK {metadata[session.username][m]["id"]} {metadata[session.username][m]["size"]}\r\n'
                 conn.sendall(s.encode())
                 return
             
@@ -329,7 +326,10 @@ def threadloop(conn, session):
 
 #Main function        
 def main():
-    global port
+    #Load the port
+    f = open('port.txt', 'r')
+    port = int(f.readline())
+    f.close()
 
     #Load users
     loadusers()
