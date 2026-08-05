@@ -306,6 +306,16 @@ def threadloop(conn, session):
     #On the QUIT command, stop the loop.
     while (b'QUIT\r\n' not in data):
         print(data)
+        if (data == b''):
+            if (session.username != None):
+                #cleanup(session)
+                os.remove(f'mail/{session.username}/{session.username}.lock')
+                session.username = None
+                session.connected = False
+                
+            conn.close()
+            print(f'Session {session.sid} over.')
+            return
         
         #Handle incoming data and receive new ones.
         handle(data, conn, session)

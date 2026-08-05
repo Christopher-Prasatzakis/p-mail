@@ -96,11 +96,16 @@ def dataentry(conn, session):
     data = conn.recv(dlimit)
     print(data)
     
-    while (data.decode().strip('\r\n') != '.'):
+    while (True):
         octets += len(data)
         databuf[session].append(data)
         data = conn.recv(dlimit)
         print(data)
+        
+        if ((b'\r\n.\r\n' in data) or (data.decode().strip('\r\n') == '.')):
+            octets += len(data) - 3
+            databuf[session].append(data[:len(data) - 3])
+            break
         
     for r in recipients[session]:
         send(databuf[session], octets, r)
