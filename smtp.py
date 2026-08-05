@@ -35,10 +35,24 @@ def loadusers():
     users = json.load(f)
     f.close()
     
+#Get the max ID according to metadata.
+def maxid(metadata):
+    if (metadata == {}):
+        return 1
+    
+    mid = -1
+    
+    for fn in metadata:
+        if (metadata[fn]['id'] > mid):
+            mid = metadata[fn]['id']
+            
+    return (mid + 1)
+    
 #Send a message to a recipient.
 def send(data, octets, recipient):
     #First, we need to prepare the message metadata.
     metadata = {}
+    print('Sending data')
     
     total = b''.join(data)
         
@@ -48,21 +62,17 @@ def send(data, octets, recipient):
     uid = sha
     date = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
     
-    r = open('/dev/urandom', 'rb')
-    rb = r.read(2)
-    i = int.from_bytes(rb)
-    r.close
+    f = open(f'mail/{recipient}/metadata.json', 'r')
+    rcpdata = json.load(f)
+    f.close()
     
-    metadata['id'] = i
+    metadata['id'] = maxid(rcpdata)
     metadata['uid'] = uid
     metadata['received'] = date
     metadata['size'] = octets
     metadata['delete'] = 0
     
     #Now, we need to add the metadata to the recipient's metadata file.
-    f = open(f'mail/{recipient}/metadata.json', 'r')
-    rcpdata = json.load(f)
-    f.close()
     rcpdata[filename] = metadata
     f = open(f'mail/{recipient}/metadata.json', 'w')
     json.dump(rcpdata, f)
@@ -75,6 +85,7 @@ def send(data, octets, recipient):
         f.write(s.decode())
         
     f.close()
+    print('Data sent')
     
 #Function for entering data.
 def dataentry(conn, session):
@@ -83,11 +94,13 @@ def dataentry(conn, session):
     octets = 0
     
     data = conn.recv(dlimit)
+    print(data)
     
-    while (data != b'.\r\n'):
+    while (data.decode().strip('\r\n') != '.'):
         octets += len(data)
         databuf[session].append(data)
         data = conn.recv(dlimit)
+        print(data)
         
     for r in recipients[session]:
         send(databuf[session], octets, r)
@@ -237,6 +250,8 @@ def main():
     while (True):
         #Accept incoming connections and initiate connection loops.
         conn, addr = my_socket.accept()
+
+        print("Connection Accepted")
 
         thread = threading.Thread(target=threadloop, args=(conn,sid))
         
