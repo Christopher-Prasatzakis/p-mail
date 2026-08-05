@@ -15,6 +15,9 @@ import datetime
 #Enable logging?
 logging = True
 
+#Print log messages on screen as well?
+prtscrn = True
+
 #Object for managing user sessions
 class Session:
     def __init__(self, sid):
@@ -37,6 +40,10 @@ def log(message):
     logfile = open(f'logs/pop3/{fn}', 'a')
     date = datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]: ')
     logfile.write(f'{date}{message}\r\n')
+    
+    if (prtscrn):
+        print(f'{date}{message}')
+        
     logfile.close()
 
 #Load metadata for a user.

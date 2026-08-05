@@ -15,6 +15,9 @@ import datetime
 #Enable logging?
 logging = True
 
+#Print log messages on screen as well?
+prtscrn = True
+
 #Max data size in octets.
 dlimit = 10485760
 
@@ -39,6 +42,10 @@ def log(message):
     logfile = open(f'logs/smtp/{fn}', 'a')
     date = datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]: ')
     logfile.write(f'{date}{message}\r\n')
+    
+    if (prtscrn):
+        print(f'{date}{message}')
+    
     logfile.close()
 
 #Load the user list from JSON.
