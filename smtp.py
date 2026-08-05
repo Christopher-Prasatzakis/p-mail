@@ -12,6 +12,9 @@ import json
 from hashlib import sha256
 import datetime
 
+#Enable logging?
+logging = True
+
 #Max data size in octets.
 dlimit = 10485760
 
@@ -26,6 +29,17 @@ senders = {}
 
 #Data buffers per session.
 databuf = {}
+
+#Write a message to the log file
+def log(message):
+    if (not logging):
+        return
+    
+    fn = datetime.datetime.now().strftime('logfile-%Y%m%d.log')
+    logfile = open(f'logs/smtp/{fn}', 'a')
+    date = datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]: ')
+    logfile.write(f'{date}{message}\r\n')
+    logfile.close()
 
 #Load the user list from JSON.
 def loadusers():
@@ -52,7 +66,7 @@ def maxid(metadata):
 def send(data, octets, recipient):
     #First, we need to prepare the message metadata.
     metadata = {}
-    print('Sending data')
+    log('Sending data')
     
     total = b''.join(data)
         
@@ -85,7 +99,7 @@ def send(data, octets, recipient):
         f.write(s.decode())
         
     f.close()
-    print('Data sent')
+    log('Data sent')
     
 #Function for entering data.
 def dataentry(conn, session):
@@ -94,13 +108,13 @@ def dataentry(conn, session):
     octets = 0
     
     data = conn.recv(dlimit)
-    print(data)
+    log(data)
     
     while (True):
         octets += len(data)
         databuf[session].append(data)
         data = conn.recv(dlimit)
-        print(data)
+        log(data)
         
         if ((b'\r\n.\r\n' in data) or (data.decode().strip('\r\n') == '.')):
             octets += len(data) - 3
@@ -218,7 +232,7 @@ def threadloop(conn, session):
         
     #On the QUIT command, stop the loop.
     while (b'QUIT\r\n' not in data):
-        print(data)
+        log(data)
         
         #Handle incoming data and receive new ones.
         handle(data, conn, session)
@@ -229,7 +243,7 @@ def threadloop(conn, session):
     conn.sendall(b'221 Goodbye\r\n')
     conn.close()
     recipients.pop(session)
-    print(f'Session {session} over.')
+    log(f'Session {session} over.')
 
 #Main function        
 def main():
@@ -250,13 +264,13 @@ def main():
     
     sid = 0
 
-    print(f'P-Mail SMTP Server up and running at port {port}.')
+    log(f'P-Mail SMTP Server up and running at port {port}.')
     
     while (True):
         #Accept incoming connections and initiate connection loops.
         conn, addr = my_socket.accept()
 
-        print("Connection Accepted")
+        log("Connection Accepted")
 
         thread = threading.Thread(target=threadloop, args=(conn,sid))
         

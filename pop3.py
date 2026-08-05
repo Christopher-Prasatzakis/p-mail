@@ -10,6 +10,10 @@ import threading
 import socket
 import json
 import os
+import datetime
+
+#Enable logging?
+logging = True
 
 #Object for managing user sessions
 class Session:
@@ -23,6 +27,17 @@ users = None
 
 #Metadata for each user.
 metadata = {}
+    
+#Write a message to the log file
+def log(message):
+    if (not logging):
+        return
+    
+    fn = datetime.datetime.now().strftime('logfile-%Y%m%d.log')
+    logfile = open(f'logs/pop3/{fn}', 'a')
+    date = datetime.datetime.now().strftime('[%Y-%m-%d %H:%M:%S]: ')
+    logfile.write(f'{date}{message}\r\n')
+    logfile.close()
 
 #Load metadata for a user.
 def load_metadata(username):
@@ -305,7 +320,7 @@ def threadloop(conn, session):
         
     #On the QUIT command, stop the loop.
     while (b'QUIT\r\n' not in data):
-        print(data)
+        log(data)
         if (data == b''):
             if (session.username != None):
                 #cleanup(session)
@@ -314,7 +329,7 @@ def threadloop(conn, session):
                 session.connected = False
                 
             conn.close()
-            print(f'Session {session.sid} over.')
+            log(f'Session {session.sid} over.')
             return
         
         #Handle incoming data and receive new ones.
@@ -332,7 +347,7 @@ def threadloop(conn, session):
         session.connected = False
         
     conn.close()
-    print(f'Session {session.sid} over.')
+    log(f'Session {session.sid} over.')
 
 #Main function        
 def main():
@@ -352,7 +367,7 @@ def main():
     
     sid = 0
 
-    print(f'P-Mail POP3 Server up and running at port {port}.')
+    log(f'P-Mail POP3 Server up and running at port {port}.')
     
     while (True):
         #Accept incoming connections and initiate connection loops.
